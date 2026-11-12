@@ -2567,13 +2567,14 @@ document.getElementById("downloadBtn")?.addEventListener("click", async () => {
   URL.revokeObjectURL(url);
 });
 document.getElementById("closeTestBtn")?.addEventListener("click", () => {
-  // Вкладку, відкриту вручну, браузер закрити не дасть — тоді показуємо екран «Тест завершено»
+  // Вкладку не закриваємо самі: де браузер це дозволяє (нова вкладка з однією сторінкою в історії), вона зникала б разом із результатом,
+  // а в режимі інкогніто чи в інших вкладках — ні. Скрізь однаково показуємо екран «Тест завершено».
   const done = () => {
     document.body.innerHTML = `<div class="done-screen stage"><div class="panel">
       <div class="ico-tile ok"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="16 9 10.5 15 8 12.5"/></svg></div>
       <h1>Тест завершено</h1><p>Результат збережено. Можна закрити цю вкладку.</p></div></div>`;
   };
-  try { window.close(); setTimeout(done, 300); } catch (e) { done(); }
+  done();
 });
 
 // ─── SCREENS ─────────────────────────────────────────────────────────────────

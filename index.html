@@ -855,6 +855,7 @@ let GEMINI_API_KEY = "";
 let GEMINI_MODEL   = "gemini-2.5-flash";
 let AI_FEAT_PROVIDERS = {};      // { comments|analysis|generation|textcheck: "groq"|"gemini" }
 let AI_DEFAULT_PROVIDER = "groq";
+let AI_WORKER_URL = "";                // якщо задано — AI йде через воркер: ключів у браузері немає
 
 // Провайдер для функції; якщо для нього немає ключа — беремо інший
 function aiProviderFor(feature){
@@ -881,6 +882,10 @@ async function loadAISettings(db) {
       AI_FEAT_PROVIDERS = s.featProviders || {};
       AI_DEFAULT_PROVIDER = s.provider || "groq";
       if(s.enabled !== undefined) AI_ENABLED = s.enabled !== false;
+      // Ключі у воркері (адмінка → AI налаштування): сторінка їх не бачить, воркер сам перевіряє дозвіл і ліміт
+      if(s.viaWorker === true){
+        try { AI_WORKER_URL = String((await get(ref(db, "settings/mail/workerUrl"))).val() || "").replace(/\/+$/, ""); } catch {}
+      }
       // Глобальні дефолти для функцій
       window._AI_COMMENTS   = s.aiComments   !== false;
       window._AI_ANALYSIS   = s.aiAnalysis   !== false;
@@ -916,6 +921,17 @@ const teacherAiLimit = () => _aiLimitP ||= (async () => {
 // Обгортка: рахуємо кожне звернення (успіх / помилка) для адмінки
 async function callGroq(messages, maxTokens = 800, temperature = 0.5, feature = "comments") {
   await assertAiQuota(db, AI_OWNER, await teacherAiLimit());
+  if (AI_WORKER_URL) {
+    // Через воркер: він перевіряє посилання на тест, дозвіл і ліміт викладача та сам веде облік
+    const linkId = new URLSearchParams(location.search).get("link");
+    const res = await fetch(AI_WORKER_URL + "/ai", {
+      method: "POST", headers: { "Content-Type": "application/json" }, signal: aiSignal(),
+      body: JSON.stringify({ feature, messages: messages.filter(m => m.role !== "system"), maxTokens, temp: temperature, as: { teacherUid: AI_OWNER, linkId } }),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok || d.ok === false) throw new Error(d.error || `AI: помилка ${res.status}`);
+    return d.text || "";
+  }
   try {
     const { text, data } = aiProviderFor(feature) === "gemini"
       ? await callGemini(messages, maxTokens, temperature)

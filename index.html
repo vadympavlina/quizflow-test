@@ -29,7 +29,7 @@
 <link rel="preconnect" href="https://quizflow-8a978-default-rtdb.europe-west1.firebasedatabase.app">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js">
-<link rel="modulepreload" href="shared/qorder.js?v=1">
+<link rel="modulepreload" href="shared/qorder.js?v=2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Шрифти не блокують першу відмальовку: поки вантажаться, текст показується системним шрифтом -->
@@ -237,7 +237,7 @@
   .q-number b{font-family:var(--mono);color:var(--primary);font-weight:700}
   .q-type-badge{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2);font-size:12px;font-weight:700}
   .q-type-badge::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--primary)}
-  .q-text{font-weight:700;font-size:22px;line-height:1.45;letter-spacing:-.3px;margin-bottom:22px;color:var(--ink);overflow-wrap:anywhere}
+  .q-text{font-weight:600;font-size:22px;line-height:1.45;letter-spacing:-.3px;margin-bottom:22px;color:var(--ink);overflow-wrap:anywhere}
   .q-hint{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--ink-2);margin:-10px 0 16px}
   .q-hint::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--warn);flex:0 0 auto}
   .ordering-list + .q-hint{margin:-10px 0 22px}
@@ -672,7 +672,7 @@ const QI = {lock:"<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"n
 window.QI = QI;
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, get, set, push, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { qVersionKey, makeOrder, buildQuestions, seededRandom, shuffledIdx, richHtml, plainText } from "./shared/qorder.js?v=1";
+import { qVersionKey, makeOrder, buildQuestions, seededRandom, shuffledIdx, richHtml, plainText } from "./shared/qorder.js?v=2";
 import { trackAI, tokensOf } from "./shared/ai-usage.js?v=3";
 import { resolveCaps, assertAiQuota } from "./shared/caps.js?v=3";
 const AI_OWNER = new URLSearchParams(location.search).get("t") || "";   // облік AI — на викладача, чий тест
@@ -1457,7 +1457,8 @@ function generateResultHTML({ student, test, attempt, questions }) {
   .pill{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;padding:5px 10px;border-radius:9px}
   .st-ok .pill{background:var(--oks);color:var(--ok)} .st-bad .pill{background:var(--bads);color:var(--bad)} .st-part .pill{background:var(--ams);color:var(--am)}
   .st-wait .pill{background:var(--ps);color:var(--p)} .st-skip .pill{background:var(--s2);color:var(--ink3)}
-  .qx{font-size:16px;font-weight:700;line-height:1.5;margin-bottom:14px;overflow-wrap:anywhere}
+  .qx b,.qx strong,.q-text b,.q-text strong{font-weight:800}
+  .qx{font-size:16px;font-weight:600;line-height:1.5;margin-bottom:14px;overflow-wrap:anywhere}
   .qx img{max-width:100%;border-radius:10px}
   .opts{list-style:none;display:flex;flex-direction:column;gap:6px}
   .opts li{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--ln);border-radius:12px;font-size:14.5px;font-weight:600}

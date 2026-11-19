@@ -55,3 +55,15 @@ for (const st of ["draft", "closed"]) {
     expect(errors).toEqual([]);
   });
 }
+
+test("ліміт часу береться з посилання, а без нього — з тесту", async ({ page, errors }) => {
+  const s = tseed();
+  s.teachers.t1.links.LY = { testId: "TX", status: "active", timeLimit: 1800 };
+  s.teachers.t1.links.LZ = { testId: "TX", status: "active", timeLimit: 0 };
+  await seed(page, s);
+  for (const [id, want] of [["LX", "15 хв"], ["LY", "30 хв"], ["LZ", "Без обмеження часу"]]) {
+    await page.goto(`/?link=${id}&t=t1`);
+    await expect(page.locator("#infoTime")).toHaveText(want);
+  }
+  expect(errors).toEqual([]);
+});

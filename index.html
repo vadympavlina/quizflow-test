@@ -1634,6 +1634,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!testData || !testData.questions?.length) return showError("Тест не знайдено або він порожній.");
     if (testData.status === "archived") return showError("Тест більше не доступний. Зверніться до викладача.");
     baseQuestions = testData.questions;
+    // Ліміт часу задає посилання; старі посилання без нього беруть час із тесту
+    if (typeof linkData.timeLimit === "number") testData.timeLimit = linkData.timeLimit;
 
     // Ліміт перевіряємо після тесту: студент, що повертається до незавершеної спроби, не рахується вдруге
     const saved = loadSavedProgress();

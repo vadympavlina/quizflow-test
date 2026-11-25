@@ -251,6 +251,15 @@
   .choice-item::after{content:"";flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:2px solid var(--line-2);transition:all .15s;
     background:center/14px no-repeat}
   .choice-item.multi::after{border-radius:7px}
+  .choices-grid.tf{grid-template-columns:1fr 1fr}
+  .tf-item{min-height:84px;font-weight:800}
+  .tf-item .choice-text{font-size:18px}
+  .tf-item .choice-marker{color:var(--text-2,#5C6684)}
+  .tf-item.yes.selected{border-color:#0E9F6E;background:rgba(14,159,110,.12);box-shadow:0 0 0 3px rgba(14,159,110,.18)}
+  .tf-item.yes.selected .choice-marker,.tf-item.yes.selected::after{background-color:#0E9F6E;border-color:#0E9F6E}
+  .tf-item.no.selected{border-color:#DC2626;background:rgba(220,38,38,.10);box-shadow:0 0 0 3px rgba(220,38,38,.16)}
+  .tf-item.no.selected .choice-marker,.tf-item.no.selected::after{background-color:#DC2626;border-color:#DC2626}
+  @media (max-width:520px){.choices-grid.tf{grid-template-columns:1fr}.tf-item{min-height:68px}}
   .choice-item.selected{border-color:var(--primary);background:var(--soft);box-shadow:0 0 0 3px var(--soft)}
   .choice-item.selected .choice-marker{background:var(--primary);border-color:var(--primary);color:#fff}
   .choice-item.selected::after{border-color:var(--primary);background-color:var(--primary);
@@ -1007,7 +1016,7 @@ async function getStudentAIComment({ testTitle, totalQuestions, correctCount, pe
     const isCorrect = ans?.correct;
     const isPartial = ans?.partial;
     let studentAns = "", correctAns = "";
-    if (q.type === "single" || q.type === "multi") {
+    if (isChoiceQ(q)) {
       const opts = q.options || [];
       const sidxs = Array.isArray(ans?.value) ? ans.value : [ans?.value].filter(v => v !== null && v !== undefined);
       const cidxs = Array.isArray(q.correct) ? q.correct : [q.correct];
@@ -1115,6 +1124,7 @@ function checkAnswer(question, studentAnswer) {
   switch (question.type) {
 
     // ── Single choice ──────────────────────────────────────────────────────
+    case "truefalse":
     case "single": {
       const correct = Number(studentAnswer) === Number(question.correct?.[0] ?? question.correct);
       return { correct, partial: false, points: correct ? 1 : 0 };
@@ -1360,14 +1370,14 @@ function generateResultHTML({ student, test, attempt, questions }) {
 
   const body = rows.map(({ q, idx, v, st }) => {
     let html = "";
-    if (q.type === "single" || q.type === "multi") {
+    if (isChoiceQ(q)) {
       const chosen  = new Set((Array.isArray(v) ? v : empty(v) ? [] : [v]).map(Number));
       const correct = new Set((Array.isArray(q.correct) ? q.correct : [q.correct]).map(Number));
       html = `<ul class="opts">${(q.options || []).map((o, i) => {
         const c = correct.has(i), s = chosen.has(i);
         const cls = c && s ? "o-hit" : s ? "o-miss" : c ? "o-right" : "";
         const tag = c && s ? "Ваш вибір · правильно" : s ? "Ваш вибір" : c ? "Правильна відповідь" : "";
-        return `<li class="${cls}"><span class="o-l">${String.fromCharCode(65 + i)}</span><span class="o-t">${e(o)}</span>${tag ? `<span class="o-tag">${tag}</span>` : ""}</li>`;
+        return `<li class="${cls}"><span class="o-l">${q.type === "truefalse" ? (i === 0 ? TF_CHECK : TF_CROSS) : String.fromCharCode(65 + i)}</span><span class="o-t">${e(o)}</span>${tag ? `<span class="o-tag">${tag}</span>` : ""}</li>`;
       }).join("")}</ul>`;
     } else if (q.type === "matching") {
       html = `<div class="tbl"><div class="tr th"><span>Пункт</span><span>Ваша відповідь</span><span>Правильно</span></div>${(q.pairs || []).map((p, i) => {
@@ -1560,6 +1570,7 @@ function getTypeName(type) {
   const map = {
     single: "Одна відповідь",
     multi:  "Кілька відповідей",
+    truefalse: "Правда чи неправда",
     text:   "Текстова відповідь",
     number: "Числова відповідь",
     matching: "Зіставлення",
@@ -1570,6 +1581,8 @@ function getTypeName(type) {
 }
 
 // js/testRunner.js — Проходження тесту студентом
+// Питання з готовими варіантами: одна відповідь, кілька, «Правда / Неправда» (там два фіксовані варіанти)
+const isChoiceQ = q => q?.type === "single" || q?.type === "multi" || q?.type === "truefalse";
 
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -1859,7 +1872,7 @@ function renderQuestion() {
         ${isLast ? "Завершити тест" : "Далі" + ARR_R}
       </button>
     </div>
-    <div class="kb-hint">${q.type === "single" || q.type === "multi" ? "Клавіші <kbd>1</kbd>–<kbd>" + Math.min(9, (q.options || []).length) + "</kbd> — вибір · " : ""}<kbd>←</kbd> <kbd>→</kbd> — між питаннями</div>`;
+    <div class="kb-hint">${isChoiceQ(q) ? "Клавіші <kbd>1</kbd>–<kbd>" + Math.min(9, (q.options || []).length) + "</kbd> — вибір · " : ""}<kbd>←</kbd> <kbd>→</kbd> — між питаннями</div>`;
 
   document.getElementById("prevBtn")?.addEventListener("click", () => goTo(currentQ - 1));
   document.getElementById("nextBtn")?.addEventListener("click", () => { if (isLast) finishTest(false); else goTo(currentQ + 1); });
@@ -1900,8 +1913,19 @@ document.getElementById("qNavigator")?.addEventListener("click", e => { const b 
 window.goToQuestion = goTo;
 document.getElementById("sideFinish")?.addEventListener("click", () => finishTest(false));
 
+// Позначки «Правда» і «Неправда»: значок, а не лише колір чи буква
+const TF_CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
+const TF_CROSS = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>';
 function renderAnswerUI(q) {
   switch (q.type) {
+    case "truefalse":
+      return `<div class="choices-grid tf" role="radiogroup" aria-label="Правда чи неправда">
+        ${["Правда", "Неправда"].map((name, i) => `
+          <button type="button" class="choice-item tf-item${i ? " no" : " yes"}" data-idx="${i}" role="radio" aria-checked="false">
+            <span class="choice-marker">${i ? TF_CROSS : TF_CHECK}</span>
+            <span class="choice-text">${name}</span>
+          </button>`).join("")}
+      </div>`;
     case "single":
     case "multi": {
       return `<div class="choices-grid" role="${q.type === "single" ? "radiogroup" : "group"}">
@@ -1976,7 +2000,7 @@ function orderItemsHtml(list){
 function restoreAnswer(q) {
   const saved = answers[q.id];
   if (saved === undefined || saved === null) return;
-  if (q.type === "single" || q.type === "multi") {
+  if (isChoiceQ(q)) {
     const savedArr = (Array.isArray(saved) ? saved : [saved]).map(Number);
     document.querySelectorAll(".choice-item").forEach(el => {
       const on = savedArr.includes(Number(el.dataset.idx));
@@ -2001,8 +2025,8 @@ const curQ = () => testData.questions[currentQ];
 function answerChanged(){ renderQNavigator(); saveProgress(); }
 
 function pickChoice(idx){
-  const q = curQ(); if (!q || (q.type !== "single" && q.type !== "multi")) return;
-  if (q.type === "single") answers[q.id] = [idx];
+  const q = curQ(); if (!isChoiceQ(q)) return;
+  if (q.type === "single" || q.type === "truefalse") answers[q.id] = [idx];
   else {
     const cur = new Set((answers[q.id] || []).map(Number));
     cur.has(idx) ? cur.delete(idx) : cur.add(idx);
@@ -2073,7 +2097,7 @@ document.addEventListener("keydown", e => {
   if (e.target.closest?.("input,textarea,select") || document.querySelector(".un-modal.open,#restoreModal[style*='flex']")) return;
   if (/^[1-9]$/.test(e.key)) {
     const q = curQ();
-    if ((q?.type === "single" || q?.type === "multi") && +e.key <= (q.options || []).length) { e.preventDefault(); pickChoice(+e.key - 1); }
+    if (isChoiceQ(q) && +e.key <= (q.type === "truefalse" ? 2 : (q.options || []).length)) { e.preventDefault(); pickChoice(+e.key - 1); }
   } else if (e.key === "ArrowRight") { e.preventDefault(); if (currentQ < testData.questions.length - 1) goTo(currentQ + 1); }
   else if (e.key === "ArrowLeft") { e.preventDefault(); goTo(currentQ - 1); }
 });

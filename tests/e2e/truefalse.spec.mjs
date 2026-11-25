@@ -32,9 +32,10 @@ for (const [label, vp] of [["комп'ютер", { width: 1280, height: 800 }], 
     const cards = page.locator(".tf-item");
     await expect(cards).toHaveCount(2);
     await expect(cards.nth(0)).toContainText("Правда"); await expect(cards.nth(1)).toContainText("Неправда");
-    // картки в один ряд, нічого не вилазить за екран
+    // на комп'ютері картки в один ряд, на телефоні одна під одною; нічого не вилазить за екран
     const [b0, b1] = [await cards.nth(0).boundingBox(), await cards.nth(1).boundingBox()];
-    expect(Math.abs(b0.y - b1.y)).toBeLessThan(2);
+    if (vp.width > 520) expect(Math.abs(b0.y - b1.y)).toBeLessThan(2);
+    else { expect(Math.abs(b0.x - b1.x)).toBeLessThan(2); expect(b1.y).toBeGreaterThan(b0.y + b0.height - 1); }
     expect(b1.x + b1.width).toBeLessThanOrEqual(vp.width);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
     // 1-е питання: «Правда» (вірно); змінюємо вибір клавішею 2 і повертаємо

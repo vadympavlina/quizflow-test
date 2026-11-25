@@ -43,6 +43,9 @@ test("коментар AI студенту іде через воркер з п�
   expect(c.body.as).toEqual({ teacherUid: "t1", linkId: "LX" });
   expect(c.body.messages.every(m => m.role !== "system")).toBe(true);
   expect(JSON.stringify(c.body)).not.toMatch(/gsk_|AIza/);
+  // у запиті до AI лише ім'я учня, прізвища немає
+  expect(JSON.stringify(c.body)).toContain("Марія");
+  expect(JSON.stringify(c.body)).not.toContain("Бондар");
   // облік веде воркер: браузер студента лічильник не пише
   expect(JSON.stringify((await readDb(page)).aiUsage || {})).not.toContain("comments");
   expect(errors).toEqual([]);

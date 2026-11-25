@@ -998,7 +998,7 @@ async function callGemini(messages, maxTokens = 800, temperature = 0.5) {
 
 // ─── AI для студента: оцінка + коментар ──────────────────────────────────────
 
-async function getStudentAIComment({ testTitle, totalQuestions, correctCount, percent, answers, questions, studentName, studentSurname }) {
+async function getStudentAIComment({ testTitle, totalQuestions, correctCount, percent, answers, questions, studentName }) {
   const pct = percent ?? Math.round((correctCount / totalQuestions) * 100);
 
   // Формуємо детальний аналіз для AI
@@ -1023,8 +1023,8 @@ async function getStudentAIComment({ testTitle, totalQuestions, correctCount, pe
 
   // Визначаємо ім'я та стать
   const sName = (studentName || '').trim();
-  const sSurname = (studentSurname || '').trim();
-  const fullName = sName ? (sName + ' ' + sSurname).trim() : 'Студент';
+  // До AI передаємо лише ім'я учня: прізвище в запит не йде
+  const fullName = sName || 'Студент';
   const female = /[аяієї]$/i.test(sName) && !/Дмитро|Микола|Ілля/.test(sName);
 
   // Список помилок
@@ -2154,7 +2154,7 @@ async function _doFinish() {
           testTitle: testData.title, totalQuestions: testData.questions.length,
           correctCount: scoreResult.correct, percent: scoreResult.percent,
           answers: formattedAnswers, questions: testData.questions,
-          studentName: name, studentSurname: surname
+          studentName: name
         });
       } catch (e) {
         console.warn("AI failed:", e.message);
